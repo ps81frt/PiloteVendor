@@ -1,5 +1,4 @@
 & {
-    # Bloc 1 : Périphériques PCI / Périphériques vendeurs
     Get-CimInstance -ClassName Win32_PnPEntity | Where-Object { $_.DeviceID -like "*PCI*" } |
         Select-Object Caption, DeviceID, Status, Service, ClassGuid, PNPClass |
         Format-Table -AutoSize
@@ -64,7 +63,6 @@
         Sort-Object -Property DeviceID |
         Format-Table -AutoSize
 
-    # Bloc 2 : Statut PnP + erreurs avec groupement
     Get-PnpDevice -PresentOnly |
         Select-Object Status, FriendlyName, InstanceId |
         Format-Table -GroupBy Status
@@ -78,3 +76,22 @@
         Select-Object ConfigManagerErrorCode, Errortext, Present, Status, StatusInfo, Caption |
         Format-List -GroupBy Status
 } | Out-File -Width 4096 -Encoding UTF8 "$env:USERPROFILE\Desktop\PeriphVendeur_et_Erreurs.txt"
+
+$script:link = $null
+
+& {
+    foreach ($f in @("$env:USERPROFILE\Desktop\PeriphVendeur_et_Erreurs.txt")) {
+        if (Test-Path $f) {
+            $script:link = curl -F "file=@$f" https://store1.gofile.io/uploadFile |
+                ConvertFrom-Json |
+                Select-Object -ExpandProperty data |
+                Select-Object -ExpandProperty downloadPage
+        }
+    }
+}
+
+& {
+    Clear-Host
+    Start-Process $script:link
+    Write-Host "`n Lien de téléchargement : $script:link`n" -ForegroundColor Green
+}
